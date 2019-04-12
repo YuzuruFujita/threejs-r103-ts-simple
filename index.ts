@@ -1,7 +1,8 @@
 import * as THREE from "three"
-import { OrbitControls } from "./node_modules/three/examples/jsm/controls/OrbitControls"
-import { GLTFLoader, GLTF } from "./node_modules/three/examples/jsm/loaders/GLTFLoader"
-import { GLTFExporter } from "./node_modules/three/examples/jsm/exporters/GLTFExporter.js"
+import "imports-loader?THREE=three!./node_modules/three/examples/js/controls/OrbitControls.js"
+import "imports-loader?THREE=three!./node_modules/three/examples/js/loaders/DDSLoader.js";
+import "imports-loader?THREE=three!./node_modules/three/examples/js/loaders/GLTFLoader.js";
+import "imports-loader?THREE=three!./node_modules/three/examples/js/exporters/GLTFExporter.js"
 import * as dat from "dat.GUI"
 
 class Main {
@@ -27,14 +28,7 @@ class Main {
     dir.position.set(1, 2, 3)
 
     this.scene.add(new THREE.Mesh(new THREE.BoxBufferGeometry(1, 1, 1), new THREE.MeshLambertMaterial({ color: 0xff0000 })).translateX(2))
-    Main.load("res/Suzanne.glb").then((m) => {
-      const x = m.scene.traverse((obj: THREE.Object3D) => {
-        const mat = (obj as any).material
-        if (mat && mat.map)
-          mat.encoding = THREE.LinearEncoding
-      })
-      this.scene.add(m.scene)
-    })
+    Main.load("res/Suzanne.gltf").then((m) => { this.scene.add(m.scene) })
 
     const gui = new dat.GUI()
     gui.add({ X: () => Main.exportScene(this.scene) }, "X").name("export glTF")
@@ -44,7 +38,7 @@ class Main {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(this.renderer.domElement);
 
-    new OrbitControls(this.camera, this.renderer.domElement)
+    new THREE.OrbitControls(this.camera, this.renderer.domElement)
 
     window.addEventListener('resize', this.onWindowResize, false);
     this.animate()
@@ -64,14 +58,14 @@ class Main {
   }
 
   private static load = async (url: string) => {
-    return new Promise<GLTF>((resolve, reject) => {
-      const loader = new GLTFLoader
-      loader.load(url, (gltf: GLTF) => { resolve(gltf) }, (e) => { }, (e) => { reject(e) })
+    return new Promise<THREE.GLTF>((resolve, reject) => {
+      const loader = new THREE.GLTFLoader
+      loader.load(url, (gltf: THREE.GLTF) => { resolve(gltf) }, (e) => { }, (e) => { reject(e) })
     })
   }
 
   private static exportScene = (scene: THREE.Scene) => {
-    const e = new GLTFExporter()
+    const e = new THREE.GLTFExporter()
     e.parse(scene, (gltf: object) => {
       const blob = new Blob([gltf as any], { type: "text/plain" })
       const dlink = document.createElement("a")

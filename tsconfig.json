@@ -7,7 +7,7 @@
     "baseUrl": ".",
     "paths": {
       "three": [
-        "./node_modules/three/src/Three.d.ts",
+        "./three.combined.d.ts"
       ]
     }
   }

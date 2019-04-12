@@ -6,7 +6,9 @@
     "sourceMap": true,
     "baseUrl": ".",
     "paths": {
-      "*": [ "./node_modules/three/src/*" ]
-    },
+      "three": [
+        "./node_modules/three/src/Three.d.ts",
+      ]
+    }
   }
 }

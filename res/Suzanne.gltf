@@ -1,19 +1,113 @@
 {
-    "accessors" : [
+    "asset" : {
+        "generator" : "Khronos Blender glTF 2.0 I/O",
+        "version" : "2.0"
+    },
+    "extensionsUsed" : [
+        "KHR_draco_mesh_compression"
+    ],
+    "extensionsRequired" : [
+        "KHR_draco_mesh_compression"
+    ],
+    "scene" : 0,
+    "scenes" : [
         {
-            "bufferView" : 0,
-            "componentType" : 5123,
-            "count" : 2904,
-            "max" : [
-                1967
+            "name" : "Scene",
+            "nodes" : [
+                0,
+                1,
+                2
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "name" : "Light",
+            "rotation" : [
+                0.16907575726509094,
+                0.7558803558349609,
+                -0.27217137813568115,
+                0.570947527885437
             ],
-            "min" : [
-                0
-            ],
-            "type" : "SCALAR"
+            "translation" : [
+                4.076245307922363,
+                5.903861999511719,
+                -1.0054539442062378
+            ]
         },
         {
-            "bufferView" : 1,
+            "name" : "Camera",
+            "rotation" : [
+                0.483536034822464,
+                0.33687159419059753,
+                -0.20870360732078552,
+                0.7804827094078064
+            ],
+            "translation" : [
+                7.358891487121582,
+                4.958309173583984,
+                6.925790786743164
+            ]
+        },
+        {
+            "mesh" : 0,
+            "name" : "Suzanne"
+        }
+    ],
+    "materials" : [
+        {
+            "name" : "Material.001",
+            "pbrMetallicRoughness" : {
+                "baseColorTexture" : {
+                    "index" : 0,
+                    "texCoord" : 0
+                },
+                "metallicFactor" : 0.7672727108001709,
+                "roughnessFactor" : 0.23454546928405762
+            }
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "Suzanne",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 0,
+                        "NORMAL" : 1,
+                        "TEXCOORD_0" : 2
+                    },
+                    "extensions" : {
+                        "KHR_draco_mesh_compression" : {
+                            "bufferView" : 0,
+                            "attributes" : {
+                                "POSITION" : 0,
+                                "NORMAL" : 1,
+                                "TEXCOORD_0" : 2
+                            }
+                        }
+                    },
+                    "indices" : 3,
+                    "material" : 0,
+                    "mode" : 4
+                }
+            ]
+        }
+    ],
+    "textures" : [
+        {
+            "source" : 0
+        }
+    ],
+    "images" : [
+        {
+            "mimeType" : "image/jpeg",
+            "name" : "checker",
+            "uri" : "checker.jpg"
+        }
+    ],
+    "accessors" : [
+        {
             "componentType" : 5126,
             "count" : 1968,
             "max" : [
@@ -29,195 +123,32 @@
             "type" : "VEC3"
         },
         {
-            "bufferView" : 2,
             "componentType" : 5126,
             "count" : 1968,
-            "max" : [
-                1.0,
-                0.9970182180404663,
-                1.0
-            ],
-            "min" : [
-                -1.0,
-                -0.992402970790863,
-                -0.9864740371704102
-            ],
             "type" : "VEC3"
         },
         {
-            "bufferView" : 3,
             "componentType" : 5126,
             "count" : 1968,
-            "max" : [
-                0.9990209937095642,
-                0.985415518283844,
-                0.9869662523269653,
-                1.0
-            ],
-            "min" : [
-                -0.9951110482215881,
-                -0.9846789240837097,
-                -0.9985567331314087,
-                1.0
-            ],
-            "type" : "VEC4"
+            "type" : "VEC2"
         },
         {
-            "bufferView" : 4,
-            "componentType" : 5126,
-            "count" : 1968,
-            "max" : [
-                0.9674209356307983,
-                0.9674209579825401
-            ],
-            "min" : [
-                0.03257904201745987,
-                0.20728349685668945
-            ],
-            "type" : "VEC2"
+            "componentType" : 5123,
+            "count" : 2904,
+            "type" : "SCALAR"
         }
     ],
-    "asset" : {
-        "generator" : "Khronos Blender glTF 2.0 exporter",
-        "version" : "2.0"
-    },
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 5808,
-            "byteOffset" : 0,
-            "target" : 34963
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 23616,
-            "byteOffset" : 5808,
-            "target" : 34962
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 23616,
-            "byteOffset" : 29424,
-            "target" : 34962
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 31488,
-            "byteOffset" : 53040,
-            "target" : 34962
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 15744,
-            "byteOffset" : 84528,
-            "target" : 34962
+            "byteLength" : 23743,
+            "byteOffset" : 0
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 100272,
+            "byteLength" : 23744,
             "uri" : "Suzanne.bin"
         }
-    ],
-    "images" : [
-        {
-            "name" : "Untitled",
-            "uri" : "Suzanne.dds"
-        }
-    ],
-    "materials" : [
-        {
-            "name" : "Material",
-            "pbrMetallicRoughness" : {
-                "baseColorTexture" : {
-                    "index" : 0
-                },
-                "metallicFactor": 0.5,
-                "roughnessFactor": 0.5
-            }
-        }
-    ],
-    "meshes" : [
-        {
-            "name" : "Suzanne",
-            "primitives" : [
-                {
-                    "attributes" : {
-                        "NORMAL" : 2,
-                        "POSITION" : 1,
-                        "TANGENT" : 3,
-                        "TEXCOORD_0" : 4
-                    },
-                    "indices" : 0,
-                    "material" : 0
-                }
-            ]
-        }
-    ],
-    "nodes" : [
-        {
-            "name" : "Camera",
-            "rotation" : [
-                0.6877461671829224,
-                0.1184106171131134,
-                -0.1152019277215004,
-                0.7069035768508911
-            ],
-            "translation" : [
-                1.9441726207733154,
-                0.04448153078556061,
-                5.753352642059326
-            ]
-        },
-        {
-            "name" : "Lamp",
-            "rotation" : [
-                0.16907575726509094,
-                0.7558802962303162,
-                -0.27217137813568115,
-                0.570947527885437
-            ],
-            "scale" : [
-                1.0,
-                1.0,
-                0.9999999403953552
-            ],
-            "translation" : [
-                4.076245307922363,
-                5.903861999511719,
-                -1.0054539442062378
-            ]
-        },
-        {
-            "mesh" : 0,
-            "name" : "Suzanne"
-        }
-    ],
-    "samplers" : [
-        {}
-    ],
-    "scene" : 0,
-    "scenes" : [
-        {
-            "name" : "Scene",
-            "nodes" : [
-                2,
-                1,
-                0
-            ]
-        }
-    ],
-    "textures" : [
-        {
-            "sampler" : 0,
-            "extensions": {
-                "MSFT_texture_dds": {
-                    "source": 0
-                }
-            }
-        }
-    ],
-    "extensionsUsed": [
-        "MSFT_texture_dds"
     ]
 }

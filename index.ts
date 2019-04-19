@@ -1,6 +1,6 @@
 import * as THREE from "three"
 import "imports-loader?THREE=three!./node_modules/three/examples/js/controls/OrbitControls.js"
-import "imports-loader?THREE=three!./node_modules/three/examples/js/loaders/DDSLoader.js";
+import "imports-loader?THREE=three!./node_modules/three/examples/js/loaders/DRACOLoader.js";
 import "imports-loader?THREE=three!./node_modules/three/examples/js/loaders/GLTFLoader.js";
 import "imports-loader?THREE=three!./node_modules/three/examples/js/exporters/GLTFExporter.js"
 import * as dat from "dat.GUI"
@@ -58,9 +58,14 @@ class Main {
   }
 
   private static load = async (url: string) => {
+    THREE.DRACOLoader.setDecoderPath('/node_modules/three/examples/js/libs/draco/');
+    const ret = await THREE.DRACOLoader.getDecoderModule();
+
+    const loader = new THREE.GLTFLoader();
+    loader.setDRACOLoader(new THREE.DRACOLoader());
+
     return new Promise<THREE.GLTF>((resolve, reject) => {
-      const loader = new THREE.GLTFLoader
-      loader.load(url, (gltf: THREE.GLTF) => { resolve(gltf) }, (e) => { }, (e) => { reject(e) })
+        loader.load(url, (gltf: THREE.GLTF) => { resolve(gltf) }, (e) => { }, (e) => { reject(e) })
     })
   }
 

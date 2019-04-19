@@ -21,6 +21,7 @@ class Main {
     this.camera.lookAt(0, 0, 0)
 
     this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(0x888888)
 
     this.scene.add(new THREE.AmbientLight(0xffffff, 0.4))
     const dir = new THREE.DirectionalLight(0xffffff, 1)
@@ -65,7 +66,7 @@ class Main {
     loader.setDRACOLoader(new THREE.DRACOLoader());
 
     return new Promise<THREE.GLTF>((resolve, reject) => {
-        loader.load(url, (gltf: THREE.GLTF) => { resolve(gltf) }, (e) => { }, (e) => { reject(e) })
+      loader.load(url, (gltf: THREE.GLTF) => { resolve(gltf) }, (e) => { }, (e) => { reject(e) })
     })
   }
 

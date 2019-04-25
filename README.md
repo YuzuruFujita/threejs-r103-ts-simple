@@ -1,4 +1,4 @@
-# threejs-r104-ts-simple
+# threejs-r104-ts-minimum
 
 ## 概要
 

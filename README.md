@@ -13,4 +13,4 @@ namespace を全てTHREEとする為にThree.d.tsとjsm内の.d.tsをthree.combi
 
 ## 補足
 
-r103,r104,r105に対応。
+r103,r104,r105,r106に対応。

@@ -7,12 +7,12 @@
 ## 詳細
 
 このプロジェクトでは @types/three の型定義ファイルの変わりに、node_modules/three/src/Three.d.tsを利用する。
-また、OrbitControls/GLTFLoader/GLTFExporter/DRACOLoader もnode_modules/three/examples/jsm/に存在する.d.tsを利用する。
+また、OrbitControls/GLTFLoader/DRACOLoader/DDSLoader もnode_modules/three/examples/jsm/に存在する.d.tsを利用する。
 tsconfig.jsonのpathsでthreeモジュールとThree.d.tsとjsm内の.d.tsとの関連付けをする。
 namespace を全てTHREEとする為にThree.d.tsとjsm内の.d.tsをthree.combined.tsに纏めている。
 
 ## 補足
 
 r106に対応。
-r103,r104,r105はDRACOLoaderのjsmが存在しないのでエラーとなる。
+r103,r104,r105はDRACOLoader/DDSLoaderのjsmが存在しないのでエラーとなる。
 

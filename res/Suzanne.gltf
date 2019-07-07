@@ -1,154 +1,227 @@
 {
-    "asset" : {
-        "generator" : "Khronos Blender glTF 2.0 I/O",
-        "version" : "2.0"
+  "asset": {
+    "generator": "Khronos glTF Blender I/O v0.9.29",
+    "version": "2.0"
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0,
+        1
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0,
+      "name": "Suzanne"
     },
-    "extensionsUsed" : [
-        "KHR_draco_mesh_compression"
-    ],
-    "extensionsRequired" : [
-        "KHR_draco_mesh_compression"
-    ],
-    "scene" : 0,
-    "scenes" : [
-        {
-            "name" : "Scene",
-            "nodes" : [
-                0,
-                1,
-                2
-            ]
-        }
-    ],
-    "nodes" : [
-        {
-            "name" : "Light",
-            "rotation" : [
-                0.16907575726509094,
-                0.7558803558349609,
-                -0.27217137813568115,
-                0.570947527885437
-            ],
-            "translation" : [
-                4.076245307922363,
-                5.903861999511719,
-                -1.0054539442062378
-            ]
+    {
+      "mesh": 1,
+      "name": "checker"
+    }
+  ],
+  "materials": [
+    {
+      "doubleSided": true,
+      "name": "Material.001",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0,
+          "texCoord": 0
         },
+        "metallicFactor": 0,
+        "roughnessFactor": 0.5,
+        "baseColorFactor": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "emissiveFactor": [
+        0,
+        0,
+        0
+      ],
+      "alphaMode": "OPAQUE"
+    },
+    {
+      "doubleSided": true,
+      "name": "checker",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "metallicFactor": 1,
+        "roughnessFactor": 1
+      },
+      "emissiveFactor": [
+        0,
+        0,
+        0
+      ],
+      "alphaMode": "OPAQUE"
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Suzanne",
+      "primitives": [
         {
-            "name" : "Camera",
-            "rotation" : [
-                0.483536034822464,
-                0.33687159419059753,
-                -0.20870360732078552,
-                0.7804827094078064
-            ],
-            "translation" : [
-                7.358891487121582,
-                4.958309173583984,
-                6.925790786743164
-            ]
-        },
-        {
-            "mesh" : 0,
-            "name" : "Suzanne"
-        }
-    ],
-    "materials" : [
-        {
-            "name" : "Material.001",
-            "pbrMetallicRoughness" : {
-                "baseColorTexture" : {
-                    "index" : 0,
-                    "texCoord" : 0
-                },
-                "metallicFactor" : 0.7672727108001709,
-                "roughnessFactor" : 0.23454546928405762
+          "attributes": {
+            "POSITION": 1,
+            "NORMAL": 2,
+            "TEXCOORD_0": 3
+          },
+          "indices": 0,
+          "material": 0,
+          "mode": 4,
+          "extensions": {
+            "KHR_draco_mesh_compression": {
+              "bufferView": 0,
+              "attributes": {
+                "POSITION": 0,
+                "NORMAL": 1,
+                "TEXCOORD_0": 2
+              }
             }
+          }
         }
-    ],
-    "meshes" : [
+      ]
+    },
+    {
+      "name": "checker",
+      "primitives": [
         {
-            "name" : "Suzanne",
-            "primitives" : [
-                {
-                    "attributes" : {
-                        "POSITION" : 0,
-                        "NORMAL" : 1,
-                        "TEXCOORD_0" : 2
-                    },
-                    "extensions" : {
-                        "KHR_draco_mesh_compression" : {
-                            "bufferView" : 0,
-                            "attributes" : {
-                                "POSITION" : 0,
-                                "NORMAL" : 1,
-                                "TEXCOORD_0" : 2
-                            }
-                        }
-                    },
-                    "indices" : 3,
-                    "material" : 0,
-                    "mode" : 4
-                }
-            ]
+          "attributes": {
+            "POSITION": 5,
+            "NORMAL": 6,
+            "TEXCOORD_0": 7
+          },
+          "indices": 4,
+          "material": 1,
+          "mode": 4,
+          "extensions": {
+            "KHR_draco_mesh_compression": {
+              "bufferView": 1,
+              "attributes": {
+                "POSITION": 0,
+                "NORMAL": 1,
+                "TEXCOORD_0": 2
+              }
+            }
+          }
         }
-    ],
-    "textures" : [
-        {
-            "source" : 0
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "source": 0,
+      "extensions": {
+        "MSFT_texture_dds": {
+          "source": 0
         }
-    ],
-    "images" : [
-        {
-            "mimeType" : "image/jpeg",
-            "name" : "checker",
-            "uri" : "checker.jpg"
-        }
-    ],
-    "accessors" : [
-        {
-            "componentType" : 5126,
-            "count" : 1968,
-            "max" : [
-                1.3671875,
-                0.984375,
-                0.8515625
-            ],
-            "min" : [
-                -1.3671875,
-                -0.984375,
-                -0.8515625
-            ],
-            "type" : "VEC3"
-        },
-        {
-            "componentType" : 5126,
-            "count" : 1968,
-            "type" : "VEC3"
-        },
-        {
-            "componentType" : 5126,
-            "count" : 1968,
-            "type" : "VEC2"
-        },
-        {
-            "componentType" : 5123,
-            "count" : 2904,
-            "type" : "SCALAR"
-        }
-    ],
-    "bufferViews" : [
-        {
-            "buffer" : 0,
-            "byteLength" : 23743,
-            "byteOffset" : 0
-        }
-    ],
-    "buffers" : [
-        {
-            "byteLength" : 23744,
-            "uri" : "Suzanne.bin"
-        }
-    ]
+      }
+    }
+  ],
+  "images": [
+    {
+      "name": "checker",
+      "uri": "Suzanne_img0.dds"
+    }
+  ],
+  "accessors": [
+    {
+      "componentType": 5123,
+      "count": 2904,
+      "type": "SCALAR"
+    },
+    {
+      "componentType": 5126,
+      "count": 1968,
+      "max": [
+        1.3671875,
+        0.984375,
+        0.8515625
+      ],
+      "min": [
+        -1.3671875,
+        -0.984375,
+        -0.8515625
+      ],
+      "type": "VEC3"
+    },
+    {
+      "componentType": 5126,
+      "count": 1968,
+      "type": "VEC3"
+    },
+    {
+      "componentType": 5126,
+      "count": 1968,
+      "type": "VEC2"
+    },
+    {
+      "componentType": 5123,
+      "count": 6,
+      "type": "SCALAR"
+    },
+    {
+      "componentType": 5126,
+      "count": 4,
+      "max": [
+        0.5,
+        0,
+        0.5
+      ],
+      "min": [
+        -0.5,
+        0,
+        -0.5
+      ],
+      "type": "VEC3"
+    },
+    {
+      "componentType": 5126,
+      "count": 4,
+      "type": "VEC3"
+    },
+    {
+      "componentType": 5126,
+      "count": 4,
+      "type": "VEC2"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 6024
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 6024,
+      "byteLength": 168
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "Suzanne_data.bin",
+      "byteLength": 6192
+    }
+  ],
+  "extensionsRequired": [
+    "KHR_draco_mesh_compression"
+  ],
+  "extensionsUsed": [
+    "KHR_draco_mesh_compression",
+    "MSFT_texture_dds"
+  ]
 }

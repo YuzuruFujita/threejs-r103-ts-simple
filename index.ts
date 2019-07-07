@@ -3,6 +3,7 @@ import "imports-loader?THREE=three!./node_modules/three/examples/js/controls/Orb
 import "imports-loader?THREE=three!./node_modules/three/examples/js/loaders/DRACOLoader.js";
 import "imports-loader?THREE=three!./node_modules/three/examples/js/loaders/GLTFLoader.js";
 import "imports-loader?THREE=three!./node_modules/three/examples/js/exporters/GLTFExporter.js"
+import "imports-loader?THREE=three!./node_modules/three/examples/js/loaders/DDSLoader.js"
 import * as dat from "dat.GUI"
 
 class Main {
@@ -64,6 +65,7 @@ class Main {
 
     const loader = new THREE.GLTFLoader();
     loader.setDRACOLoader(new THREE.DRACOLoader());
+    loader.setDDSLoader(new THREE.DDSLoader());
 
     return new Promise<THREE.GLTF>((resolve, reject) => {
       loader.load(url, (gltf: THREE.GLTF) => { resolve(gltf) }, (e) => { }, (e) => { reject(e) })

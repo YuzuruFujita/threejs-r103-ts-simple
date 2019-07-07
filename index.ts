@@ -33,7 +33,7 @@ class Main {
     Main.load("res/Suzanne.gltf").then((m) => { this.scene.add(m.scene) })
 
     const gui = new dat.GUI()
-    gui.add({ X: () => Main.exportScene(this.scene) }, "X").name("export glTF")
+    // gui.add({ X: () => Main.exportScene(this.scene) }, "X").name("export glTF")
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(window.devicePixelRatio);

@@ -18,7 +18,10 @@ module.exports = {
     extensions: [
       '.ts',
       '.js'
-    ]
+    ],
+    alias: {
+      "three": path.resolve(__dirname, "three.combined"),
+    }
   },
   devtool: 'source-map'
 };

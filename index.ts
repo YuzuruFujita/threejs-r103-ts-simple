@@ -1,9 +1,4 @@
 import * as THREE from "three"
-import "imports-loader?THREE=three!./node_modules/three/examples/js/controls/OrbitControls.js"
-import "imports-loader?THREE=three!./node_modules/three/examples/js/loaders/DRACOLoader.js";
-import "imports-loader?THREE=three!./node_modules/three/examples/js/loaders/GLTFLoader.js";
-import "imports-loader?THREE=three!./node_modules/three/examples/js/exporters/GLTFExporter.js"
-import "imports-loader?THREE=three!./node_modules/three/examples/js/loaders/DDSLoader.js"
 import * as dat from "dat.GUI"
 
 class Main {

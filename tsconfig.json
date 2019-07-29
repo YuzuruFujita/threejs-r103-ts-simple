@@ -7,7 +7,7 @@
     "baseUrl": ".",
     "paths": {
       "three": [
-        "./three.combined.d.ts"
+        "./three.combined"
       ]
     }
   }

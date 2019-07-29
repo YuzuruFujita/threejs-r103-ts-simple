@@ -2,14 +2,12 @@
 
 ## 概要
 
-@types/threeがdeprecatedとなって利用できなくなったのでthree.jsが提供する.d.tsを利用しビルドする最小限の環境を作成した。
+three.js + TypeScript + webpack による最小プロジェクトのひな形。
 
 ## 詳細
 
-このプロジェクトでは @types/three の型定義ファイルの変わりに、node_modules/three/src/Three.d.tsを利用する。
-また、OrbitControls/GLTFLoader/DRACOLoader/DDSLoader もnode_modules/three/examples/jsm/に存在する.d.tsを利用する。
-tsconfig.jsonのpathsでthreeモジュールとThree.d.tsとjsm内の.d.tsとの関連付けをする。
-namespace を全てTHREEとする為にThree.d.tsとjsm内の.d.tsをthree.combined.tsに纏めている。
+three/examples/jsm に配置されている型定義(.d.ts)を利用する。
+OrbitControlなどthree.module.jsに含まれないものをTHREEの名前空間に所属させる。
 
 ## 補足
 

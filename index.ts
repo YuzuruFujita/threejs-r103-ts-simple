@@ -24,10 +24,14 @@ class Main {
     this.scene.add(dir)
     dir.position.set(1, 2, 3)
 
-    this.scene.add(new THREE.Mesh(new THREE.BoxBufferGeometry(1, 1, 1), new THREE.MeshLambertMaterial({ color: 0xff0000 })).translateX(2))
+    const material = new THREE.StandardNodeMaterial()
+    const uvmap = new THREE.FloatNode(6);
+    (material as any).color = new THREE.CheckerNode(new THREE.OperatorNode(new THREE.UVNode(), uvmap, THREE.OperatorNode.MUL) as any) // The color property of THREE.StandardNodeMaterial is undefined. The first parameter of CheckerNode does not accept THREE.OperatorNode.
+    this.scene.add(new THREE.Mesh(new THREE.BoxBufferGeometry(1, 1, 1), material).translateX(2))
     Main.load("res/Suzanne.gltf").then((m) => { this.scene.add(m.scene) })
 
     const gui = new dat.GUI()
+    gui.add(uvmap, "value", 1, 8)
     // gui.add({ X: () => Main.exportScene(this.scene) }, "X").name("export glTF")
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true });

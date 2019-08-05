@@ -8,4 +8,10 @@ export * from './node_modules/three/examples/jsm/loaders/DDSLoader'
 
 export * from './node_modules/three/examples/jsm/nodes/Nodes'
 
+// minimum definition for './node_modules/jsm/libs/stats.module.js'
+export class Stats {
+    dom: HTMLElement
+    update(): void
+}
+
 export as namespace THREE;

@@ -6,6 +6,7 @@ class Main {
   private scene: THREE.Scene
   private renderer: THREE.WebGLRenderer
   private syncs: (() => void)[] = []
+  private stats: THREE.Stats
 
   constructor() {
     const container: HTMLElement | null = document.getElementById('container');
@@ -41,6 +42,9 @@ class Main {
 
     new THREE.OrbitControls(this.camera, this.renderer.domElement)
 
+    this.stats = new THREE.Stats()
+    document.body.appendChild(this.stats.dom)
+
     window.addEventListener('resize', this.onWindowResize, false);
     this.animate()
   }
@@ -56,6 +60,7 @@ class Main {
       i()
     requestAnimationFrame(this.animate);
     this.renderer.render(this.scene, this.camera);
+    this.stats.update()
   }
 
   private static load = async (url: string) => {

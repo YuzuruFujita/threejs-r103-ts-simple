@@ -36,6 +36,7 @@ class Main {
     // gui.add({ X: () => Main.exportScene(this.scene) }, "X").name("export glTF")
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    console.log(`THREE.REVISION:${THREE.REVISION}`)
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(this.renderer.domElement);
@@ -64,11 +65,11 @@ class Main {
   }
 
   private static load = async (url: string) => {
-    THREE.DRACOLoader.setDecoderPath('/node_modules/three/examples/js/libs/draco/');
-    const ret = await THREE.DRACOLoader.getDecoderModule();
+    const dracoLoader = new THREE.DRACOLoader()
+    dracoLoader.setDecoderPath('/node_modules/three/examples/js/libs/draco/');
 
     const loader = new THREE.GLTFLoader();
-    loader.setDRACOLoader(new THREE.DRACOLoader());
+    loader.setDRACOLoader(dracoLoader);
     loader.setDDSLoader(new THREE.DDSLoader());
 
     return new Promise<THREE.GLTF>((resolve, reject) => {

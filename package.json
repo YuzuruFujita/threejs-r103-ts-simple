@@ -11,16 +11,16 @@
   },
   "dependencies": {
     "dat.gui": "^0.7.6",
-    "three": "^0.107.0"
+    "three": "^0.108.0"
   },
   "devDependencies": {
     "@types/dat.gui": "^0.7.4",
     "serve": "^11.1.0",
     "ts-loader": "^6.0.4",
-    "tslint": "^5.18.0",
-    "typescript": "^3.5.3",
-    "webpack": "^4.39.1",
-    "webpack-cli": "^3.3.6",
-    "webpack-log": "^2.0.0"
+    "tslint": "^5.19.0",
+    "typescript": "^3.6.2",
+    "webpack": "^4.39.3",
+    "webpack-cli": "^3.3.7",
+    "webpack-log": "^3.0.1"
   }
 }

@@ -27,7 +27,7 @@ class Main {
 
     const material = new THREE.StandardNodeMaterial()
     const uvmap = new THREE.FloatNode(6);
-    (material as any).color = new THREE.CheckerNode(new THREE.OperatorNode(new THREE.UVNode(), uvmap, THREE.OperatorNode.MUL) as any) // The color property of THREE.StandardNodeMaterial is undefined. The first parameter of CheckerNode does not accept THREE.OperatorNode.
+    material.color = new THREE.CheckerNode(new THREE.OperatorNode(new THREE.UVNode(), uvmap, THREE.OperatorNode.MUL) as any) // The first parameter of CheckerNode does not accept THREE.OperatorNode.
     this.scene.add(new THREE.Mesh(new THREE.BoxBufferGeometry(1, 1, 1), material).translateX(2))
     Main.load("res/Suzanne.gltf").then((m) => { this.scene.add(m.scene) })
 

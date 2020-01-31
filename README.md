@@ -11,7 +11,7 @@ OrbitControlなどthree.module.jsに含まれないものをTHREEの名前空間
 
 ## 補足
 
-r112対応
+r112,r113対応
 r103,r104,r105はDRACOLoader/DDSLoaderのjsmが存在しないのでエラーとなる。
 r106はnodesのjsmが存在しないのでエラーとなる。
 r107はDRACOLoaderがstaticメンバではなくなったのでエラーとなる。

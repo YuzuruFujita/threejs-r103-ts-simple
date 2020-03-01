@@ -12,6 +12,6 @@ three/examples/jsm に配置されている型定義(.d.ts)を利用する。
 OrbitControlなどthree.module.jsに含まれないものをTHREEの名前空間に含める。
 
 ## 補足
-r113対応。
+r113,r114対応。
 three.js公式の一般的な実装に寄せた。
 コードをTypeScriptの書き方に合わせてみた。

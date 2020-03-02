@@ -12,11 +12,16 @@ type Main = {
 }
 
 async function create(): Promise<Main> {
+  if (!THREE.WEBGL.isWebGL2Available())
+    document.body.appendChild(THREE.WEBGL.getWebGL2ErrorMessage());
   const container: HTMLElement | null = document.getElementById('container');
   if (container === null)
     throw Error("Failure")
-
-  const renderer = new THREE.WebGLRenderer({ antialias: false });
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('webgl2', { antialias: false });
+  if (context === null)
+    throw Error("Failure")
+  const renderer = new THREE.WebGLRenderer({ canvas: canvas, context: context });
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.8;
   renderer.outputEncoding = THREE.sRGBEncoding;

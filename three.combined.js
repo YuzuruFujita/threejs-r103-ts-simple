@@ -8,7 +8,10 @@ export * from './node_modules/three/examples/jsm/loaders/RGBELoader'
 export * from './node_modules/three/examples/jsm/loaders/DRACOLoader'
 export * from './node_modules/three/examples/jsm/loaders/DDSLoader'
 // util
-export * from './node_modules/three/examples/jsm/utils/RoughnessMipmapper.js'
+export * from './node_modules/three/examples/jsm/utils/RoughnessMipmapper'
+// postprocessing
+export * from './node_modules/three/examples/jsm/postprocessing/EffectComposer'
+export * from './node_modules/three/examples/jsm/postprocessing/SSAOPass'
 // nodes
 export * from './node_modules/three/examples/jsm/nodes/Nodes'
 // WEBGL

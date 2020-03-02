@@ -100,6 +100,15 @@ async function create(): Promise<Main> {
 
   // UI
   const orbit = new THREE.OrbitControls(camera, renderer.domElement)
+  function onKeyDown(ev: KeyboardEvent) {
+    // wasd+qeキー移動
+    const f = (kc: number) => { return ev.keyCode == kc ? (ev.shiftKey ? 10 : ev.altKey ? 1 / 10 : 1) : 0 }
+    const mv = new THREE.Vector3(f(68) - f(65), f(69) - f(81), f(83) - f(87))
+    camera.position.copy(mv).applyMatrix4(camera.matrixWorld)
+    orbit.target.copy(mv).add(new THREE.Vector3(0, 0, - 1)).applyMatrix4(camera.matrixWorld)
+    camera.updateProjectionMatrix()
+  }
+  window.addEventListener('keydown', onKeyDown, false)
 
   function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;

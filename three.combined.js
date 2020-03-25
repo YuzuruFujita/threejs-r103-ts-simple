@@ -12,6 +12,9 @@ export * from './node_modules/three/examples/jsm/utils/RoughnessMipmapper'
 // postprocessing
 export * from './node_modules/three/examples/jsm/postprocessing/EffectComposer'
 export * from './node_modules/three/examples/jsm/postprocessing/SSAOPass'
+export * from './node_modules/three/examples/jsm/postprocessing/ShaderPass'
+// shader
+export * from './node_modules/three/examples/jsm/shaders/GammaCorrectionShader'
 // nodes
 export * from './node_modules/three/examples/jsm/nodes/Nodes'
 // WEBGL

@@ -24,9 +24,10 @@ async function create(): Promise<Main> {
   if (context === null)
     throw Error("Failure")
   const renderer = new THREE.WebGLRenderer({ canvas: canvas, context: context });
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.8;
-  renderer.outputEncoding = THREE.sRGBEncoding;
+  // レンダリング時はリニアのままレンダーターゲットに出力する。
+  // renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  // renderer.toneMappingExposure = 0.8;
+  // renderer.outputEncoding = THREE.sRGBEncoding;
   console.log(`THREE.REVISION:${THREE.REVISION}`)
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -45,7 +46,15 @@ async function create(): Promise<Main> {
   const scene = new THREE.Scene();
 
   // ポストプロセッシング
-  const composer = new THREE.EffectComposer(renderer);
+  const parameters: THREE.WebGLRenderTargetOptions = {
+    minFilter: THREE.LinearFilter,
+    magFilter: THREE.LinearFilter,
+    format: THREE.RGBAFormat,
+    stencilBuffer: false,
+    type: THREE.HalfFloatType // sRGB補正で8bitでは演算精度が足りないのでHalfFloat(指数ビット5,仮数部10,符号1)にしている。8bitではグラデーションでバンディングが発生する。
+  };
+  const renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, parameters);
+  const composer = new THREE.EffectComposer(renderer, renderTarget);
   const ssaoPass = new THREE.SSAOPass(scene, camera)
   // ssaoPass.output = THREE.SSAOPass.OUTPUT.SSAO
   ssaoPass.kernelRadius = 0.2 // サンプリングする距離(m)
@@ -53,6 +62,7 @@ async function create(): Promise<Main> {
   ssaoPass.beautyRenderTarget.depthTexture.type = THREE.FloatType // r115で対応予定。なぜか対応されずにCloseされた。https://github.com/mrdoob/three.js/pull/18672
   ssaoPass.beautyRenderTarget.texture.encoding = renderer.outputEncoding // rendererのoutputEncodingを反映する
   composer.addPass(ssaoPass)
+  composer.addPass(new THREE.ShaderPass(THREE.GammaCorrectionShader)) // リニア空間からsRGB空間への変換はポストエフェクトの最後に一括で行う。GammaCorrectionとなっているが実装はsRGBへの変換となっている。
 
   // 環境マップと背景
   let envMap: THREE.Texture

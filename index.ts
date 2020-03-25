@@ -50,7 +50,7 @@ async function create(): Promise<Main> {
   // ssaoPass.output = THREE.SSAOPass.OUTPUT.SSAO
   ssaoPass.kernelRadius = 0.2 // サンプリングする距離(m)
   ssaoPass.minDistance = 0.000034 // 遮蔽判定の最小値[near,far] を[0,1]に写した範囲の値。
-  ssaoPass.beautyRenderTarget.depthTexture.type = THREE.FloatType // r115で対応予定
+  ssaoPass.beautyRenderTarget.depthTexture.type = THREE.FloatType // r115で対応予定。なぜか対応されずにCloseされた。https://github.com/mrdoob/three.js/pull/18672
   ssaoPass.beautyRenderTarget.texture.encoding = renderer.outputEncoding // rendererのoutputEncodingを反映する
   composer.addPass(ssaoPass)
 

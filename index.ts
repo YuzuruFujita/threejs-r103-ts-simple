@@ -159,9 +159,7 @@ function isMeshStandardMaterial(x: THREE.Material): x is THREE.MeshStandardMater
 async function loadRGBE(fileName: string): Promise<THREE.DataTexture> {
   const loader = new THREE.RGBELoader()
   loader.setDataType(THREE.UnsignedByteType)
-  return new Promise<THREE.DataTexture>((resolve, reject) => {
-    loader.load(fileName, (tex: THREE.DataTexture) => { resolve(tex) }, () => { }, (e) => { reject(e) })
-  })
+  return loader.loadAsync(fileName);  // r116で対応された非同期読み込み
 }
 
 async function loadGLTF(url: string): Promise<THREE.GLTF> {
@@ -171,10 +169,7 @@ async function loadGLTF(url: string): Promise<THREE.GLTF> {
   const loader = new THREE.GLTFLoader();
   loader.setDRACOLoader(dracoLoader);
   loader.setDDSLoader(new THREE.DDSLoader());
-
-  return new Promise<THREE.GLTF>((resolve, reject) => {
-    loader.load(url, (gltf: THREE.GLTF) => { resolve(gltf) }, (e) => { }, (e) => { reject(e) })
-  })
+  return loader.loadAsync(url)
 }
 
 (async () => { await create() })()

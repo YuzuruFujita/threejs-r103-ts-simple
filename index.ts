@@ -70,7 +70,7 @@ async function create(): Promise<Main> {
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
     pmremGenerator.compileEquirectangularShader();
 
-    const bg: THREE.DataTexture = await loadRGBE("./res/bg.hdr")
+    const bg: THREE.DataTexture = await loadEXR("./res/bg.exr")
     envMap = pmremGenerator.fromEquirectangular(bg).texture;
     scene.background = envMap;
     scene.environment = envMap;
@@ -81,7 +81,7 @@ async function create(): Promise<Main> {
   // glTFのモデルロード
   // use of RoughnessMipmapper is optional
   const roughnessMipmapper = new THREE.RoughnessMipmapper(renderer);
-  const gltf = await loadGLTF("res/Suzanne.glb")
+  const gltf = await loadGLTF("res/Teapot.glb")
   for (const child of traverse(gltf.scene)) {
     if (isMesh(child) && isMaterial(child.material) && isMeshStandardMaterial(child.material))
       roughnessMipmapper.generateMipmaps(child.material);
@@ -156,8 +156,8 @@ function isMesh(x: THREE.Object3D): x is THREE.Mesh { return x instanceof THREE.
 function isMaterial(x: THREE.Material | THREE.Material[]): x is THREE.Material { return x instanceof THREE.Material }
 function isMeshStandardMaterial(x: THREE.Material): x is THREE.MeshStandardMaterial { return x instanceof THREE.MeshStandardMaterial }
 
-async function loadRGBE(fileName: string): Promise<THREE.DataTexture> {
-  const loader = new THREE.RGBELoader()
+async function loadEXR(fileName: string): Promise<THREE.DataTexture> {
+  const loader = new THREE.EXRLoader()
   loader.setDataType(THREE.UnsignedByteType)
   return loader.loadAsync(fileName);  // r116で対応された非同期読み込み
 }

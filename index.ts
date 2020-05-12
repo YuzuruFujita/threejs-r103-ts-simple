@@ -56,7 +56,7 @@ async function create(): Promise<Main> {
   const renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, parameters);
   const composer = new THREE.EffectComposer(renderer, renderTarget);
   const ssaoPass = new THREE.SSAOPass(scene, camera)
-  // ssaoPass.output = THREE.SSAOPass.OUTPUT.SSAO
+  ssaoPass.output = THREE.SSAOPass.OUTPUT.Default
   ssaoPass.kernelRadius = 0.2 // サンプリングする距離(m)
   ssaoPass.minDistance = 0.000034 // 遮蔽判定の最小値[near,far] を[0,1]に写した範囲の値。
   ssaoPass.beautyRenderTarget.depthTexture.type = THREE.FloatType // r115で対応予定。なぜか対応されずにCloseされた。https://github.com/mrdoob/three.js/pull/18672
@@ -78,35 +78,59 @@ async function create(): Promise<Main> {
     pmremGenerator.dispose();
   }
 
-  // glTFのモデルロード
+  // glTFのモデル表示
   // use of RoughnessMipmapper is optional
   const roughnessMipmapper = new THREE.RoughnessMipmapper(renderer);
-  const gltf = await loadGLTF("res/Teapot.glb")
-  for (const child of traverse(gltf.scene)) {
-    if (isMesh(child) && isMaterial(child.material) && isMeshStandardMaterial(child.material))
-      roughnessMipmapper.generateMipmaps(child.material);
-  }
-  for (const i of gltf.scene.children)
-    scene.add(i)
+  const gltf = await loadGLTF("res/Cube.glb")
+  const model = findModel(gltf.scene, "DST")
+  roughnessMipmapper.generateMipmaps(model.material);
+  const matRef: THREE.MeshStandardMaterial = model.material
+
+  // 読み込んだglTFモデルをそのまま表示
+  const meshGLTF = new THREE.Mesh(model.geometry, model.material)
+  scene.add(meshGLTF)
+
+  // glTFモデルのマテリアルを再構成して表示
+  const matStd = new THREE.MeshStandardMaterial();
+  matStd.defines["MARKER:STD"] = 1;
+  matStd.map = model.material.map
+  matStd.normalMap = model.material.normalMap
+  matStd.normalScale.set(1, -1); // これ大事
+  matStd.metalness = 1
+  matStd.roughness = 1
+  matStd.metalnessMap = model.material.metalnessMap;
+  matStd.roughnessMap = model.material.roughnessMap;
+  matStd.side = THREE.FrontSide // backface culling
+  const meshStd = new THREE.Mesh(model.geometry, matStd)
+  meshStd.position.set(-2, 0, 0)
+  scene.add(meshStd)
+
+  // glTFモデルのマテリアルをノードベースで再構成して表示
+  const matNodeBased = new THREE.StandardNodeMaterial()
+  if (matRef.map)
+    matNodeBased.color = new THREE.TextureNode(matRef.map)
+  // NormalMapNodeで tangent space から world space に変換。blenderのNormal Mapノードと同じ
+  // glTFローダと同様にNormalScaleでyの符号を反転する。
+  if (matRef.normalMap)
+    matNodeBased.normal = new THREE.NormalMapNode(new THREE.TextureNode(matRef.normalMap), new THREE.Vector2Node(1, -1))
+  if (matRef.metalnessMap)
+    matNodeBased.metalness = new THREE.SwitchNode(new THREE.TextureNode(matRef.metalnessMap), "b") // metalness = blue
+  if (matRef.roughnessMap)
+    matNodeBased.roughness = new THREE.SwitchNode(new THREE.TextureNode(matRef.roughnessMap), "g") // roughness = red,  ao = red
+  if (scene.environment)
+    matNodeBased.environment = new THREE.TextureCubeNode(new THREE.TextureNode(scene.environment));
+  const meshNodeBased = new THREE.Mesh(model.geometry, matNodeBased)
+  meshNodeBased.position.set(2, 0, 0)
+  scene.add(meshNodeBased)
+
   roughnessMipmapper.dispose();
 
-  // ノードベースマテリアルによる地面
-  {
-    const nodeTexture = new THREE.TextureNode(envMap);
-    const nodeTextureIntensity = new THREE.FloatNode(1);
-    const material = new THREE.StandardNodeMaterial()
-    const uvmap = new THREE.FloatNode(6);
-    material.color = new THREE.ColorNode(0xaaaaaa)
-    material.roughness = new THREE.CheckerNode(new THREE.OperatorNode(new THREE.UVNode(), uvmap, THREE.OperatorNode.MUL) as any)
-    material.environment = new THREE.OperatorNode(new THREE.TextureCubeNode(nodeTexture), nodeTextureIntensity, THREE.OperatorNode.MUL);
-    const geo = new THREE.PlaneBufferGeometry(10, 10).rotateX(-Math.PI / 2).translate(0, -1, 0)
-    const mesh = new THREE.Mesh(geo, material)
-    scene.add(mesh)
-
-    const gui = new dat.GUI()
-    gui.add(uvmap, "value", 1, 32, 1)
-    gui.add(mesh.position, "y", -1, 1, 1 / 100)
-  }
+  const gui = new dat.GUI()
+  gui.add(meshStd.position, "x", -4, 4, 1 / 2).name("std-x")
+  gui.add(meshNodeBased.position, "x", -4, 4, 1 / 2).name("node-x")
+  gui.add(meshGLTF, "visible", meshStd.visible).name("gltf")
+  gui.add(meshStd, "visible", meshStd.visible).name("std")
+  gui.add(meshNodeBased, "visible", meshNodeBased.visible).name("node")
 
   // UI
   const orbit = new THREE.OrbitControls(camera, renderer.domElement)
@@ -155,6 +179,7 @@ function* traverse(x: THREE.Object3D): Generator<THREE.Object3D> {
 function isMesh(x: THREE.Object3D): x is THREE.Mesh { return x instanceof THREE.Mesh }
 function isMaterial(x: THREE.Material | THREE.Material[]): x is THREE.Material { return x instanceof THREE.Material }
 function isMeshStandardMaterial(x: THREE.Material): x is THREE.MeshStandardMaterial { return x instanceof THREE.MeshStandardMaterial }
+function isBufferGeometry(x: THREE.Geometry | THREE.BufferGeometry): x is THREE.BufferGeometry { return x instanceof THREE.BufferGeometry }
 
 async function loadEXR(fileName: string): Promise<THREE.DataTexture> {
   const loader = new THREE.EXRLoader()
@@ -170,6 +195,16 @@ async function loadGLTF(url: string): Promise<THREE.GLTF> {
   loader.setDRACOLoader(dracoLoader);
   loader.setDDSLoader(new THREE.DDSLoader());
   return loader.loadAsync(url)
+}
+
+function findModel(root: THREE.Object3D, name: string): { geometry: THREE.BufferGeometry, material: THREE.MeshStandardMaterial } {
+  for (const child of traverse(root)) {
+    if (child.name === name) {
+      if (isMesh(child) && isMaterial(child.material) && isMeshStandardMaterial(child.material) && isBufferGeometry(child.geometry))
+        return { geometry: child.geometry, material: child.material }
+    }
+  }
+  throw Error("not found");
 }
 
 (async () => { await create() })()

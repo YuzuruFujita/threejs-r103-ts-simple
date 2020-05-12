@@ -92,7 +92,6 @@ async function create(): Promise<Main> {
 
   // glTFモデルのマテリアルを再構成して表示
   const matStd = new THREE.MeshStandardMaterial();
-  matStd.defines["MARKER:STD"] = 1;
   matStd.map = model.material.map
   matStd.normalMap = model.material.normalMap
   matStd.normalScale.set(1, -1); // これ大事
@@ -123,14 +122,25 @@ async function create(): Promise<Main> {
   meshNodeBased.position.set(2, 0, 0)
   scene.add(meshNodeBased)
 
+  // Shaderマテリアルで再構成して表示
+  const matShader = createStandardShaderMaterial(model.material, scene.environment)
+  const meshShader = new THREE.Mesh(model.geometry, matShader)
+  meshShader.position.set(-4, 0, 0)
+  scene.add(meshShader)
+
   roughnessMipmapper.dispose();
 
   const gui = new dat.GUI()
   gui.add(meshStd.position, "x", -4, 4, 1 / 2).name("std-x")
   gui.add(meshNodeBased.position, "x", -4, 4, 1 / 2).name("node-x")
+  gui.add(meshShader.position, "x", -4, 4, 1 / 2).name("shader-x")
   gui.add(meshGLTF, "visible", meshStd.visible).name("gltf")
   gui.add(meshStd, "visible", meshStd.visible).name("std")
   gui.add(meshNodeBased, "visible", meshNodeBased.visible).name("node")
+  gui.add(meshShader, "visible", meshShader.visible).name("shader")
+
+  function f() { console.log(matStd) }
+  gui.add({ X: f }, "X").name("matStd")
 
   // UI
   const orbit = new THREE.OrbitControls(camera, renderer.domElement)
@@ -155,9 +165,9 @@ async function create(): Promise<Main> {
   function animate() {
     for (const i of syncs)
       i()
-    requestAnimationFrame(animate);
     composer.render();
     stats.update()
+    requestAnimationFrame(animate);
   }
 
   //
@@ -205,6 +215,47 @@ function findModel(root: THREE.Object3D, name: string): { geometry: THREE.Buffer
     }
   }
   throw Error("not found");
+}
+
+// ShaderMaterialでMeshStandardMaterial互換のマテリアルを生成する。
+// Shaderの一部置き換えればノードベースのようにカスタマイズできる。
+function createStandardShaderMaterial(matSrc: THREE.MeshStandardMaterial, envMap: THREE.Texture | null) {
+  // MeshStandardMaterial用のUniformを作る。
+  const defaultUniforms = THREE.UniformsUtils.clone({ ...THREE.ShaderLib.standard.uniforms, ...THREE.UniformsLib.lights })
+  const customUniforms = {
+    diffuse: { value: matSrc.color }, // UniformsLib.common.diffuseは0xeeeeeeとなるので、matSrc.color=0xffffffを設定しないと暗くなる。
+    map: { value: matSrc.map },
+    normalMap: { value: matSrc.normalMap },
+    normalScale: { value: new THREE.Vector2(1, -1) },
+    roughnessMap: { value: matSrc.roughnessMap },
+    metalnessMap: { value: matSrc.metalnessMap },
+    envMap: { value: envMap },
+    roughness: { value: 1.0 },
+    metalness: { value: 1.0 },
+  }
+
+  const material = new THREE.ShaderMaterial({
+    uniforms: { ...defaultUniforms, ...customUniforms },
+    // ShaderMaterialに適切なプロパティを設定すると、USE_MAPなどの対応する定義が自動で設定される。
+    defines: {},
+    // MeshStandardMaterialの頂点/フラグメントシェーダを利用する。
+    vertexShader: THREE.ShaderChunk.meshphysical_vert,
+    fragmentShader: THREE.ShaderChunk.meshphysical_frag,
+    lights: true // ライトの利用
+  });
+
+  type DummyMaterial = { map: THREE.Texture | null; normalMap: THREE.Texture | null; normalMapType: THREE.NormalMapTypes; roughnessMap: THREE.Texture | null; metalnessMap: THREE.Texture | null; envMap: THREE.Texture | null; }
+  function isDummyMaterial(v: THREE.ShaderMaterial | DummyMaterial): v is DummyMaterial { return true }
+  if (isDummyMaterial(material)) {
+    // uniform用ではなくdefinesにUSE_***系を設定する為のもの。またsRGB->Linear補正にも利用される。
+    material.map = matSrc.map;
+    material.normalMap = matSrc.normalMap;
+    material.normalMapType = THREE.TangentSpaceNormalMap
+    material.roughnessMap = matSrc.roughnessMap
+    material.metalnessMap = matSrc.metalnessMap
+    material.envMap = envMap;
+  }
+  return material;
 }
 
 (async () => { await create() })()

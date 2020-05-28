@@ -191,10 +191,10 @@ function isMaterial(x: THREE.Material | THREE.Material[]): x is THREE.Material {
 function isMeshStandardMaterial(x: THREE.Material): x is THREE.MeshStandardMaterial { return x instanceof THREE.MeshStandardMaterial }
 function isBufferGeometry(x: THREE.Geometry | THREE.BufferGeometry): x is THREE.BufferGeometry { return x instanceof THREE.BufferGeometry }
 
-async function loadEXR(fileName: string): Promise<THREE.DataTexture> {
+async function loadEXR(url: string): Promise<THREE.DataTexture> {
   const loader = new THREE.EXRLoader()
   loader.setDataType(THREE.UnsignedByteType)
-  return loader.loadAsync(fileName);  // r116で対応された非同期読み込み
+  return loader.loadAsync(url).catch((e) => { throw `Not found. ${url}` });  // r116で対応された非同期読み込み。エラーを置き換えて再スロー。
 }
 
 async function loadGLTF(url: string): Promise<THREE.GLTF> {
@@ -204,7 +204,7 @@ async function loadGLTF(url: string): Promise<THREE.GLTF> {
   const loader = new THREE.GLTFLoader();
   loader.setDRACOLoader(dracoLoader);
   loader.setDDSLoader(new THREE.DDSLoader());
-  return loader.loadAsync(url)
+  return loader.loadAsync(url).catch((e) => { throw `Not found. ${url}` });
 }
 
 function findModel(root: THREE.Object3D, name: string): { geometry: THREE.BufferGeometry, material: THREE.MeshStandardMaterial } {
@@ -214,7 +214,7 @@ function findModel(root: THREE.Object3D, name: string): { geometry: THREE.Buffer
         return { geometry: child.geometry, material: child.material }
     }
   }
-  throw Error("not found");
+  throw Error(`Not found. Mesh:${name}`);
 }
 
 // ShaderMaterialでMeshStandardMaterial互換のマテリアルを生成する。
@@ -258,4 +258,11 @@ function createStandardShaderMaterial(matSrc: THREE.MeshStandardMaterial, envMap
   return material;
 }
 
-(async () => { await create() })()
+create().catch((e) => {
+  for (const i of [...document.body.childNodes])
+    document.body.removeChild(i)
+  const element = document.createElement('div');
+  element.innerHTML = e;
+  document.body.appendChild(element);
+  console.error(e)
+})

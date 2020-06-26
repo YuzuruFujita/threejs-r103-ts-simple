@@ -19,11 +19,7 @@ async function create(): Promise<Main> {
   const container: HTMLElement | null = document.getElementById('container');
   if (container === null)
     throw Error("Failure")
-  const canvas = document.createElement('canvas');
-  const context = canvas.getContext('webgl2', { antialias: false });
-  if (context === null)
-    throw Error("Failure")
-  const renderer = new THREE.WebGLRenderer({ canvas: canvas, context: context });
+  const renderer = new THREE.WebGLRenderer(); // r118ではWebGL2がデフォルト
   // レンダリング時はリニアのままレンダーターゲットに出力する。
   // renderer.toneMapping = THREE.ACESFilmicToneMapping;
   // renderer.toneMappingExposure = 0.8;

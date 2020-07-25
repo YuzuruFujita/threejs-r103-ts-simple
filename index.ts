@@ -144,9 +144,13 @@ async function create(): Promise<Main> {
     // wasd+qeキー移動
     const f = (kc: number) => { return ev.keyCode == kc ? (ev.shiftKey ? 10 : ev.altKey ? 1 / 10 : 1) : 0 }
     const mv = new THREE.Vector3(f(68) - f(65), f(69) - f(81), f(83) - f(87))
+    if (mv.length() == 0)
+      return
     camera.position.copy(mv).applyMatrix4(camera.matrixWorld)
     orbit.target.copy(mv).add(new THREE.Vector3(0, 0, - 1)).applyMatrix4(camera.matrixWorld)
     camera.updateProjectionMatrix()
+    ev.preventDefault()
+    ev.cancelBubble = true
   }
   window.addEventListener('keydown', onKeyDown, false)
 

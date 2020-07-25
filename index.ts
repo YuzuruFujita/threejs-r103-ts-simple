@@ -157,6 +157,8 @@ async function create(): Promise<Main> {
     composer.setSize(window.innerWidth, window.innerHeight);
   }
 
+  createCameraUI(camera, orbit)
+
   const syncs: (() => void)[] = []
   function animate() {
     for (const i of syncs)
@@ -252,6 +254,22 @@ function createStandardShaderMaterial(matSrc: THREE.MeshStandardMaterial, envMap
     material.envMap = envMap;
   }
   return material;
+}
+
+async function createCameraUI(camera: THREE.PerspectiveCamera, orbit: THREE.OrbitControls): Promise<void> {
+  function applyJSON(xx: { object: { matrix: number[] } }) {
+    const m4x4 = new THREE.Matrix4().fromArray(xx.object.matrix).decompose(camera.position, camera.quaternion, camera.scale)
+    camera.updateProjectionMatrix()
+    const e = m4x4.elements
+    orbit.target.set(e[8], e[9], e[10]).multiplyScalar(-10).add(new THREE.Vector3(e[12], e[13], e[14]))
+  }
+  const gui = new dat.GUI()
+  const folder = gui.addFolder("Camera Pos")
+  folder.open()
+  function exportJSON() { navigator.clipboard.writeText(JSON.stringify(camera)).then(() => { console.log("OK") }) }
+  folder.add({ X: exportJSON }, "X").name("Copy")
+  function importJSON() { navigator.clipboard.readText().then((x: string) => { applyJSON(JSON.parse(x)) }).catch((e) => { console.log("NO JSON object.") }) }
+  folder.add({ X: importJSON }, "X").name("Paste")
 }
 
 create().catch((e) => {

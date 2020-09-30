@@ -124,6 +124,12 @@ async function create(): Promise<Main> {
   meshShader.position.set(-4, 0, 0)
   scene.add(meshShader)
 
+  // r121***BufferGeometryの定義エラー確認用。Three.d.tsのexport * from './geometries/Geometries';の参照先で素のGeometry用の定義しかexportしてない。
+  const geoBox = new THREE.BoxBufferGeometry()
+  const meshBox = new THREE.Mesh(geoBox, matShader)
+  meshBox.position.set(-6, 0, 0)
+  scene.add(meshBox)
+
   roughnessMipmapper.dispose();
 
   const gui = new dat.GUI()

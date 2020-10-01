@@ -1,8 +1,5 @@
 export * from './node_modules/three/src/Three';
 
-// geometries r121
-export * from './node_modules/three/src/geometries/BoxBufferGeometry'
-
 // controls
 export * from './node_modules/three/examples/jsm/controls/OrbitControls'
 // loaders

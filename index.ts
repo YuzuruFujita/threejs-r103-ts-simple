@@ -251,6 +251,7 @@ function createStandardShaderMaterial(matSrc: THREE.MeshStandardMaterial, envMap
     fragmentShader: THREE.ShaderChunk.meshphysical_frag,
     lights: true // ライトの利用
   });
+  material.glslVersion = THREE.GLSL1;
 
   type DummyMaterial = { map: THREE.Texture | null; normalMap: THREE.Texture | null; normalMapType: THREE.NormalMapTypes; roughnessMap: THREE.Texture | null; metalnessMap: THREE.Texture | null; envMap: THREE.Texture | null; }
   function isDummyMaterial(v: THREE.ShaderMaterial | DummyMaterial): v is DummyMaterial { return true }

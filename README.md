@@ -14,5 +14,6 @@ three/examples/jsm に配置されている型定義(.d.ts)を利用する。
 OrbitControlなどthree.module.jsに含まれないものをTHREEの名前空間に含める。
 
 ## 補足
-r118,r119,r120,r121.1対応。
-r120は*BufferGeometryの型が未定義エラーとなる。
+r122対応。
+SSAOのdepthTexture周りの変更によりr122専用となった。
+webpack5は放置。

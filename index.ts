@@ -55,7 +55,7 @@ async function create(): Promise<Main> {
   ssaoPass.output = THREE.SSAOPass.OUTPUT.Default
   ssaoPass.kernelRadius = 0.2 // サンプリングする距離(m)
   ssaoPass.minDistance = 0.000034 // 遮蔽判定の最小値[near,far] を[0,1]に写した範囲の値。
-  ssaoPass.beautyRenderTarget.depthTexture.type = THREE.FloatType // r115で対応予定。なぜか対応されずにCloseされた。https://github.com/mrdoob/three.js/pull/18672
+  ssaoPass.normalRenderTarget.depthTexture.type = THREE.FloatType // r122でdepthTextureはbeautyRenderTargetからnormalRenderTargetに変更。normal用のマテリアルによっては結果が変化するかもしれない。
   ssaoPass.beautyRenderTarget.texture.encoding = renderer.outputEncoding // rendererのoutputEncodingを反映する
   composer.addPass(ssaoPass)
   composer.addPass(new THREE.ShaderPass(THREE.GammaCorrectionShader)) // リニア空間からsRGB空間への変換はポストエフェクトの最後に一括で行う。GammaCorrectionとなっているが実装はsRGBへの変換となっている。
@@ -123,12 +123,6 @@ async function create(): Promise<Main> {
   const meshShader = new THREE.Mesh(model.geometry, matShader)
   meshShader.position.set(-4, 0, 0)
   scene.add(meshShader)
-
-  // r121***BufferGeometryの定義エラー確認用。Three.d.tsのexport * from './geometries/Geometries';の参照先で素のGeometry用の定義しかexportしてない。
-  const geoBox = new THREE.BoxBufferGeometry()
-  const meshBox = new THREE.Mesh(geoBox, matShader)
-  meshBox.position.set(-6, 0, 0)
-  scene.add(meshBox)
 
   roughnessMipmapper.dispose();
 

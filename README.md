@@ -14,6 +14,6 @@ three/examples/jsm に配置されている型定義(.d.ts)を利用する。
 OrbitControlなどthree.module.jsに含まれないものをTHREEの名前空間に含める。
 
 ## 補足
-r122対応。
+r122,r123対応。
 SSAOのdepthTexture周りの変更によりr122専用となった。
 webpack5は放置。

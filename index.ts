@@ -52,7 +52,7 @@ async function create(): Promise<Main> {
   const renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, parameters);
   const composer = new THREE.EffectComposer(renderer, renderTarget);
   const ssaoPass = new THREE.SSAOPass(scene, camera)
-  ssaoPass.output = THREE.SSAOPass.OUTPUT.Default
+  ssaoPass.output = (THREE.SSAOPass.OUTPUT as any).Default // .d.tsの定義はどうするのが正しいのかよくわからない
   ssaoPass.kernelRadius = 0.2 // サンプリングする距離(m)
   ssaoPass.minDistance = 0.000034 // 遮蔽判定の最小値[near,far] を[0,1]に写した範囲の値。
   ssaoPass.normalRenderTarget.depthTexture.type = THREE.FloatType // r122でdepthTextureはbeautyRenderTargetからnormalRenderTargetに変更。normal用のマテリアルによっては結果が変化するかもしれない。
@@ -191,7 +191,7 @@ function* traverse(x: THREE.Object3D): Generator<THREE.Object3D> {
 function isMesh(x: THREE.Object3D): x is THREE.Mesh { return x instanceof THREE.Mesh }
 function isMaterial(x: THREE.Material | THREE.Material[]): x is THREE.Material { return x instanceof THREE.Material }
 function isMeshStandardMaterial(x: THREE.Material): x is THREE.MeshStandardMaterial { return x instanceof THREE.MeshStandardMaterial }
-function isBufferGeometry(x: THREE.Geometry | THREE.BufferGeometry): x is THREE.BufferGeometry { return x instanceof THREE.BufferGeometry }
+function isBufferGeometry(x: THREE.BufferGeometry): x is THREE.BufferGeometry { return x instanceof THREE.BufferGeometry }
 
 async function loadEXR(url: string): Promise<THREE.DataTexture> {
   const loader = new THREE.EXRLoader()

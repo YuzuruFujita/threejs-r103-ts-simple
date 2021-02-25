@@ -205,7 +205,7 @@ async function loadGLTF(url: string): Promise<THREE.GLTF> {
 
   const loader = new THREE.GLTFLoader();
   loader.setDRACOLoader(dracoLoader);
-  loader.setDDSLoader(new THREE.DDSLoader());
+  // loader.setDDSLoader(new THREE.DDSLoader()); // r126ではDDSはサポートされない。代わりにKTX v2 images with Basis Universal supercompressionの利用が推奨
   return loader.loadAsync(url).catch((e) => { throw `Not found. ${url}` });
 }
 

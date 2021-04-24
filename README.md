@@ -12,7 +12,7 @@ PostProcessingのSSAOを利用。深度バッファの精度を得るためにwe
 OrbitControlなどthree.module.jsに含まれないものをTHREEの名前空間に含める。
 
 ## 補足
-r126,r127対応。
+r126,r127,r128対応。
 @types/threeへの対応。three.js本体から切り離されてDefinitelyTypedに移行している。
 glTFローダはDDS非対応になった。
 webpack5は放置。

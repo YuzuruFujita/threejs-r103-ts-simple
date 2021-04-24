@@ -3,15 +3,9 @@ import * as dat from "dat.GUI"
 
 // based on https://github.com/mrdoob/three.js/blob/master/examples/webgl_loader_gltf.html
 
-type Main = {
-  renderer: THREE.WebGLRenderer,
-  stats: THREE.Stats
-  scene: THREE.Scene,
-  camera: THREE.PerspectiveCamera,
-  syncs: (() => void)[]
-}
+async function create(): Promise<void> {
+  console.log(`THREE.REVISION:${THREE.REVISION}`)
 
-async function create(): Promise<Main> {
   // レンダラー
   // r115のSSAOの浮動小数点深度バッファ対応向けにwebgl2専用とした。
   if (!THREE.WEBGL.isWebGL2Available())
@@ -19,12 +13,8 @@ async function create(): Promise<Main> {
   const container: HTMLElement | null = document.getElementById('container');
   if (container === null)
     throw Error("Failure")
-  const renderer = new THREE.WebGLRenderer(); // r118ではWebGL2がデフォルト
-  // レンダリング時はリニアのままレンダーターゲットに出力する。
-  // renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  // renderer.toneMappingExposure = 0.8;
-  // renderer.outputEncoding = THREE.sRGBEncoding;
-  console.log(`THREE.REVISION:${THREE.REVISION}`)
+  const renderer = new THREE.WebGLRenderer();
+  renderer.shadowMap.enabled = true;
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
@@ -41,10 +31,27 @@ async function create(): Promise<Main> {
   // シーン
   const scene = new THREE.Scene();
 
+  // ライト
+  const light = new THREE.DirectionalLight(0xffffff, 1)
+  light.position.set(10, 10, -10)
+  light.castShadow = true;
+  /*
+    normalBias
+    シャドウアクネ対策。
+    シェーディングポイントのワールド座標を光源方向にnormalBiasだけオフセットしてからシャドウマップ空間に写す。
+    表裏のポリゴンの厚さが薄い場合やsideがTHREE.DoubleSide(両面)の場合にアクネが発生するのを抑える。
+    深度をオフセットするbiasとは別のもの。
+    https://github.com/mrdoob/three.js/pull/18915
+  */
+  light.shadow.normalBias = 0.1;
+  light.shadow.camera.near = 1;
+  light.shadow.camera.far = 30;
+  scene.add(light)
+
   // ポストプロセッシング
   const parameters: THREE.WebGLRenderTargetOptions = {
-    minFilter: THREE.LinearFilter,
-    magFilter: THREE.LinearFilter,
+    minFilter: THREE.NearestFilter,
+    magFilter: THREE.NearestFilter,
     format: THREE.RGBAFormat,
     stencilBuffer: false,
     type: THREE.HalfFloatType // sRGB補正で8bitでは演算精度が足りないのでHalfFloat(指数ビット5,仮数部10,符号1)にしている。8bitではグラデーションでバンディングが発生する。
@@ -56,127 +63,174 @@ async function create(): Promise<Main> {
   ssaoPass.kernelRadius = 0.2 // サンプリングする距離(m)
   ssaoPass.minDistance = 0.000034 // 遮蔽判定の最小値[near,far] を[0,1]に写した範囲の値。
   ssaoPass.normalRenderTarget.depthTexture.type = THREE.FloatType // r122でdepthTextureはbeautyRenderTargetからnormalRenderTargetに変更。normal用のマテリアルによっては結果が変化するかもしれない。
+  ssaoPass.beautyRenderTarget.texture.type = THREE.HalfFloatType; // SSAO内部のレンダーターゲットもHalffloat化しないとバンディングが発生する。
   ssaoPass.beautyRenderTarget.texture.encoding = renderer.outputEncoding // rendererのoutputEncodingを反映する
   composer.addPass(ssaoPass)
-  composer.addPass(new THREE.ShaderPass(THREE.GammaCorrectionShader)) // リニア空間からsRGB空間への変換はポストエフェクトの最後に一括で行う。GammaCorrectionとなっているが実装はsRGBへの変換となっている。
+  composer.addPass(colorManagementPass())
 
-  // 環境マップと背景
-  let envMap: THREE.Texture
-  {
-    const pmremGenerator = new THREE.PMREMGenerator(renderer);
-    pmremGenerator.compileEquirectangularShader();
-
-    const bg: THREE.DataTexture = await loadEXR("./res/bg.exr")
-    envMap = pmremGenerator.fromEquirectangular(bg).texture;
+  return Promise.all([loadEnvMap(renderer), loadModel(renderer)]).then(function ([envMap, model]) {
     scene.background = envMap;
     scene.environment = envMap;
+
+    // 読み込んだglTFモデルをそのまま表示
+    const mesh = new THREE.Mesh(model.geometry, model.material)
+    scene.add(mesh)
+
+    // ノードで再構築
+    const meshNode = nodeBased(model, envMap)
+    scene.add(meshNode)
+    meshNode.position.set(2.5, 0, 2.5)
+
+    // ShaderMaterialで再構築
+    const meshShader = shaderMaterialBased(model, scene.environment)
+    scene.add(meshShader)
+    meshShader.position.set(-2.5, 0, -2.5)
+
+    // 地面
+    scene.add(new THREE.Mesh(new THREE.PlaneGeometry(20, 20).rotateX(-Math.PI / 2).translate(0, -1, 0), new THREE.MeshStandardMaterial()))
+
+    for (const i of traverse(scene)) {
+      if (isMesh(i))
+        i.receiveShadow = i.castShadow = true;
+    }
+
+    const gui = new dat.GUI()
+    gui.add(mesh, "visible", mesh.visible).name("gltf")
+    gui.add(meshNode, "visible", meshNode.visible).name("Node")
+    gui.add(meshShader, "visible", meshShader.visible).name("Shader")
+
+    // UI
+    const orbit = new THREE.OrbitControls(camera, renderer.domElement)
+    window.addEventListener('keydown', asdfMove(camera, orbit), false)
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      composer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    createCameraUI(camera, orbit)
+
+    const syncs: (() => void)[] = []
+    function animate() {
+      for (const i of syncs)
+        i()
+      composer.render();
+      stats.update()
+      requestAnimationFrame(animate);
+    }
+
+    window.addEventListener('resize', onWindowResize, false);
+    animate()
+  })
+}
+
+// リニア空間 -> ACESFilmicトーンマッピング -> sRGB空間への変換
+function colorManagementPass(): THREE.ShaderPass {
+  return new THREE.ShaderPass({
+    uniforms: { tDiffuse: { value: null } },
+    vertexShader: `varying vec2 vUv;
+		void main() {
+			vUv = uv;
+			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+		}`
+    ,
+    fragmentShader: `
+		uniform sampler2D tDiffuse;
+		varying vec2 vUv;
+    #include <tonemapping_pars_fragment>
+		void main() {
+			vec4 tex = texture2D( tDiffuse, vUv );
+			gl_FragColor = LinearTosRGB(vec4(ACESFilmicToneMapping(tex.rgb),1.0));
+		}`
+  })
+}
+
+// 環境マップと背景
+async function loadEnvMap(renderer: THREE.WebGLRenderer): Promise<THREE.Texture> {
+  return loadEXR("res/bg.exr").then(function (bg: THREE.DataTexture) {
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    pmremGenerator.compileEquirectangularShader();
+    const envMap = pmremGenerator.fromEquirectangular(bg).texture
     bg.dispose();
     pmremGenerator.dispose();
-  }
+    return envMap;
+  })
+}
 
-  // glTFのモデル表示
-  // use of RoughnessMipmapper is optional
-  const roughnessMipmapper = new THREE.RoughnessMipmapper(renderer);
-  const gltf = await loadGLTF("res/Cube.glb")
-  const model = findModel(gltf.scene, "DST")
-  roughnessMipmapper.generateMipmaps(model.material);
-  const matRef: THREE.MeshStandardMaterial = model.material
+// モデルのロード
+async function loadModel(renderer: THREE.WebGLRenderer): Promise<Model> {
+  return loadGLTF("res/Cube.glb").then(function (gltf: THREE.GLTF) {
+    return findModel(gltf.scene, "DST")
+  })
+}
 
-  // 読み込んだglTFモデルをそのまま表示
-  const meshGLTF = new THREE.Mesh(model.geometry, model.material)
-  scene.add(meshGLTF)
+// マテリアルをノードベースで再構成
+function nodeBased(model: Model, envMap: THREE.Texture): THREE.Mesh<THREE.BufferGeometry, THREE.StandardNodeMaterial> {
+  const matRef = model.material
 
-  // glTFモデルのマテリアルを再構成して表示
-  const matStd = new THREE.MeshStandardMaterial();
-  matStd.map = model.material.map
-  matStd.normalMap = model.material.normalMap
-  matStd.normalScale.set(1, -1); // これ大事
-  matStd.metalness = 1
-  matStd.roughness = 1
-  matStd.metalnessMap = model.material.metalnessMap;
-  matStd.roughnessMap = model.material.roughnessMap;
-  matStd.side = THREE.FrontSide // backface culling
-  const meshStd = new THREE.Mesh(model.geometry, matStd)
-  meshStd.position.set(-2, 0, 0)
-  scene.add(meshStd)
-
-  // glTFモデルのマテリアルをノードベースで再構成して表示
   const matNodeBased = new THREE.StandardNodeMaterial()
   if (matRef.map)
     matNodeBased.color = new THREE.TextureNode(matRef.map)
-  // NormalMapNodeで tangent space から world space に変換。blenderのNormal Mapノードと同じ
+  // NormalMapNodeでtangent spaceからworld spaceに変換。blenderのNormal Mapノードと同じ
   // glTFローダと同様にNormalScaleでyの符号を反転する。
   if (matRef.normalMap)
-    matNodeBased.normal = new THREE.NormalMapNode(new THREE.TextureNode(matRef.normalMap), new THREE.Vector2Node(1, -1))
+    matNodeBased.normal = new THREE.NormalMapNode(new THREE.TextureNode(matRef.normalMap), new THREE.Vector2Node(matRef.normalScale))
   if (matRef.metalnessMap)
     matNodeBased.metalness = new THREE.SwitchNode(new THREE.TextureNode(matRef.metalnessMap), "b") // metalness = blue
   if (matRef.roughnessMap)
     matNodeBased.roughness = new THREE.SwitchNode(new THREE.TextureNode(matRef.roughnessMap), "g") // roughness = red,  ao = red
-  if (scene.environment)
-    matNodeBased.environment = new THREE.TextureCubeNode(new THREE.TextureNode(scene.environment));
-  const meshNodeBased = new THREE.Mesh(model.geometry, matNodeBased)
-  meshNodeBased.position.set(2, 0, 0)
-  scene.add(meshNodeBased)
+  matNodeBased.environment = new THREE.TextureCubeNode(new THREE.TextureNode(envMap));
+  return new THREE.Mesh(model.geometry, matNodeBased)
+}
 
-  // Shaderマテリアルで再構成して表示
-  const matShader = createStandardShaderMaterial(model.material, scene.environment)
-  const meshShader = new THREE.Mesh(model.geometry, matShader)
-  meshShader.position.set(-4, 0, 0)
-  scene.add(meshShader)
+// ShaderMaterialでMeshStandardMaterial互換のマテリアルを再構成
+function shaderMaterialBased(model: Model, envMap: THREE.Texture) {
+  const matRef = model.material
 
-  roughnessMipmapper.dispose();
-
-  const gui = new dat.GUI()
-  gui.add(meshStd.position, "x", -4, 4, 1 / 2).name("std-x")
-  gui.add(meshNodeBased.position, "x", -4, 4, 1 / 2).name("node-x")
-  gui.add(meshShader.position, "x", -4, 4, 1 / 2).name("shader-x")
-  gui.add(meshGLTF, "visible", meshStd.visible).name("gltf")
-  gui.add(meshStd, "visible", meshStd.visible).name("std")
-  gui.add(meshNodeBased, "visible", meshNodeBased.visible).name("node")
-  gui.add(meshShader, "visible", meshShader.visible).name("shader")
-
-  function f() { console.log(matStd) }
-  gui.add({ X: f }, "X").name("matStd")
-
-  // UI
-  const orbit = new THREE.OrbitControls(camera, renderer.domElement)
-  function onKeyDown(ev: KeyboardEvent) {
-    // wasd+qeキー移動
-    const f = (kc: number) => { return ev.keyCode == kc ? (ev.shiftKey ? 10 : ev.altKey ? 1 / 10 : 1) : 0 }
-    const mv = new THREE.Vector3(f(68) - f(65), f(69) - f(81), f(83) - f(87))
-    if (mv.length() == 0)
-      return
-    camera.position.copy(mv).applyMatrix4(camera.matrixWorld)
-    orbit.target.copy(mv).add(new THREE.Vector3(0, 0, - 1)).applyMatrix4(camera.matrixWorld)
-    camera.updateProjectionMatrix()
-    ev.preventDefault()
-    ev.cancelBubble = true
-  }
-  window.addEventListener('keydown', onKeyDown, false)
-
-  function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    composer.setSize(window.innerWidth, window.innerHeight);
+  // MeshStandardMaterial用のUniformを作る。
+  const uniforms = {
+    // 必須のUniform
+    ...THREE.UniformsUtils.clone(THREE.ShaderLib.standard.uniforms),
+    ...THREE.UniformsUtils.clone(THREE.UniformsLib.lights),
+    // modelのマテリアルで上書き
+    diffuse: { value: matRef.color },
+    map: { value: matRef.map },
+    normalMap: { value: matRef.normalMap },
+    normalScale: { value: matRef.normalScale },
+    roughnessMap: { value: matRef.roughnessMap },
+    metalnessMap: { value: matRef.metalnessMap },
+    envMap: { value: envMap },
+    roughness: { value: matRef.roughness },
+    metalness: { value: matRef.metalness },
   }
 
-  createCameraUI(camera, orbit)
+  const material = new THREE.ShaderMaterial({
+    uniforms: uniforms,
+    // ShaderMaterialに適切なプロパティを設定すると、USE_MAPなどの対応する定義が自動で設定される。
+    defines: {},
+    // MeshStandardMaterialの頂点/フラグメントシェーダを利用する。
+    vertexShader: THREE.ShaderChunk.meshphysical_vert,
+    fragmentShader: THREE.ShaderChunk.meshphysical_frag,
+    lights: true, // ライトの利用。
+    glslVersion: THREE.GLSL1
+  });
 
-  const syncs: (() => void)[] = []
-  function animate() {
-    for (const i of syncs)
-      i()
-    composer.render();
-    stats.update()
-    requestAnimationFrame(animate);
-  }
+  type DummyMaterial = { map: THREE.Texture | null; normalMap: THREE.Texture | null; normalMapType: THREE.NormalMapTypes; roughnessMap: THREE.Texture | null; metalnessMap: THREE.Texture | null; envMap: THREE.Texture | null; }
+  function isDummyMaterial(v: THREE.ShaderMaterial | DummyMaterial): v is DummyMaterial { return true }
+  if (!isDummyMaterial(material))
+    throw Error("ASSERT")
 
-  //
-  window.addEventListener('resize', onWindowResize, false);
-  animate()
-
-  return { renderer: renderer, syncs: syncs, camera: camera, scene: scene, stats: stats }
+  // definesにUSE_***を設定してシェーダ内の#ifdefの有効化をする
+  // またsRGB->Linear補正にも利用される。
+  material.map = matRef.map;
+  material.normalMap = matRef.normalMap;
+  material.normalMapType = THREE.TangentSpaceNormalMap
+  material.roughnessMap = matRef.roughnessMap
+  material.metalnessMap = matRef.metalnessMap
+  material.envMap = envMap;
+  return new THREE.Mesh(model.geometry, material)
 }
 
 function* traverse(x: THREE.Object3D): Generator<THREE.Object3D> {
@@ -191,7 +245,6 @@ function* traverse(x: THREE.Object3D): Generator<THREE.Object3D> {
 function isMesh(x: THREE.Object3D): x is THREE.Mesh { return x instanceof THREE.Mesh }
 function isMaterial(x: THREE.Material | THREE.Material[]): x is THREE.Material { return x instanceof THREE.Material }
 function isMeshStandardMaterial(x: THREE.Material): x is THREE.MeshStandardMaterial { return x instanceof THREE.MeshStandardMaterial }
-function isBufferGeometry(x: THREE.BufferGeometry): x is THREE.BufferGeometry { return x instanceof THREE.BufferGeometry }
 
 async function loadEXR(url: string): Promise<THREE.DataTexture> {
   const loader = new THREE.EXRLoader()
@@ -202,63 +255,37 @@ async function loadEXR(url: string): Promise<THREE.DataTexture> {
 async function loadGLTF(url: string): Promise<THREE.GLTF> {
   const dracoLoader = new THREE.DRACOLoader()
   dracoLoader.setDecoderPath('/node_modules/three/examples/js/libs/draco/');
-
   const loader = new THREE.GLTFLoader();
   loader.setDRACOLoader(dracoLoader);
   // loader.setDDSLoader(new THREE.DDSLoader()); // r126ではDDSはサポートされない。代わりにKTX v2 images with Basis Universal supercompressionの利用が推奨
   return loader.loadAsync(url).catch((e) => { throw `Not found. ${url}` });
 }
 
-function findModel(root: THREE.Object3D, name: string): { geometry: THREE.BufferGeometry, material: THREE.MeshStandardMaterial } {
+type Model = { geometry: THREE.BufferGeometry, material: THREE.MeshStandardMaterial }
+
+function findModel(root: THREE.Object3D, name: string): Model {
   for (const child of traverse(root)) {
     if (child.name === name) {
-      if (isMesh(child) && isMaterial(child.material) && isMeshStandardMaterial(child.material) && isBufferGeometry(child.geometry))
+      if (isMesh(child) && isMaterial(child.material) && isMeshStandardMaterial(child.material))
         return { geometry: child.geometry, material: child.material }
     }
   }
   throw Error(`Not found. Mesh:${name}`);
 }
 
-// ShaderMaterialでMeshStandardMaterial互換のマテリアルを生成する。
-// Shaderの一部置き換えればノードベースのようにカスタマイズできる。
-function createStandardShaderMaterial(matSrc: THREE.MeshStandardMaterial, envMap: THREE.Texture | null) {
-  // MeshStandardMaterial用のUniformを作る。
-  const defaultUniforms = THREE.UniformsUtils.clone({ ...THREE.ShaderLib.standard.uniforms, ...THREE.UniformsLib.lights })
-  const customUniforms = {
-    diffuse: { value: matSrc.color }, // UniformsLib.common.diffuseは0xeeeeeeとなるので、matSrc.color=0xffffffを設定しないと暗くなる。
-    map: { value: matSrc.map },
-    normalMap: { value: matSrc.normalMap },
-    normalScale: { value: new THREE.Vector2(1, -1) },
-    roughnessMap: { value: matSrc.roughnessMap },
-    metalnessMap: { value: matSrc.metalnessMap },
-    envMap: { value: envMap },
-    roughness: { value: 1.0 },
-    metalness: { value: 1.0 },
+function asdfMove(camera: THREE.PerspectiveCamera, orbit: THREE.OrbitControls) {
+  return function (ev: KeyboardEvent) {
+    // wasd+qeキー移動(blender互換)
+    const f = (kc: string) => { return ev.key == kc ? (ev.shiftKey ? 10 : ev.altKey ? 1 / 10 : 1) : 0 }
+    const mv = new THREE.Vector3(f("d") - f("a"), f("e") - f("q"), f("s") - f("w"))
+    if (mv.length() == 0)
+      return
+    camera.position.copy(mv).applyMatrix4(camera.matrixWorld)
+    orbit.target.copy(mv).add(new THREE.Vector3(0, 0, - 1)).applyMatrix4(camera.matrixWorld)
+    camera.updateProjectionMatrix()
+    ev.preventDefault()
+    ev.cancelBubble = true
   }
-
-  const material = new THREE.ShaderMaterial({
-    uniforms: { ...defaultUniforms, ...customUniforms },
-    // ShaderMaterialに適切なプロパティを設定すると、USE_MAPなどの対応する定義が自動で設定される。
-    defines: {},
-    // MeshStandardMaterialの頂点/フラグメントシェーダを利用する。
-    vertexShader: THREE.ShaderChunk.meshphysical_vert,
-    fragmentShader: THREE.ShaderChunk.meshphysical_frag,
-    lights: true // ライトの利用
-  });
-  material.glslVersion = THREE.GLSL1;
-
-  type DummyMaterial = { map: THREE.Texture | null; normalMap: THREE.Texture | null; normalMapType: THREE.NormalMapTypes; roughnessMap: THREE.Texture | null; metalnessMap: THREE.Texture | null; envMap: THREE.Texture | null; }
-  function isDummyMaterial(v: THREE.ShaderMaterial | DummyMaterial): v is DummyMaterial { return true }
-  if (isDummyMaterial(material)) {
-    // uniform用ではなくdefinesにUSE_***系を設定する為のもの。またsRGB->Linear補正にも利用される。
-    material.map = matSrc.map;
-    material.normalMap = matSrc.normalMap;
-    material.normalMapType = THREE.TangentSpaceNormalMap
-    material.roughnessMap = matSrc.roughnessMap
-    material.metalnessMap = matSrc.metalnessMap
-    material.envMap = envMap;
-  }
-  return material;
 }
 
 async function createCameraUI(camera: THREE.PerspectiveCamera, orbit: THREE.OrbitControls): Promise<void> {

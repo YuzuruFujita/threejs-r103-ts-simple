@@ -101,7 +101,7 @@ async function create(): Promise<void> {
 
     // UI
     const orbit = new THREE.OrbitControls(camera, renderer.domElement)
-    window.addEventListener('keydown', asdfMove(camera, orbit), false)
+    window.addEventListener('keydown', wasdqeMove(camera, orbit), false)
 
     function onWindowResize() {
       camera.aspect = window.innerWidth / window.innerHeight;
@@ -273,7 +273,7 @@ function findModel(root: THREE.Object3D, name: string): Model {
   throw Error(`Not found. Mesh:${name}`);
 }
 
-function asdfMove(camera: THREE.PerspectiveCamera, orbit: THREE.OrbitControls) {
+function wasdqeMove(camera: THREE.PerspectiveCamera, orbit: THREE.OrbitControls) {
   return function (ev: KeyboardEvent) {
     // wasd+qeキー移動(blender互換)
     const f = (kc: string) => { return ev.key == kc ? (ev.shiftKey ? 10 : ev.altKey ? 1 / 10 : 1) : 0 }

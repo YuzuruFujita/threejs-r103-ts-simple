@@ -160,14 +160,14 @@ async function loadEnvMap(renderer: THREE.WebGLRenderer): Promise<THREE.Texture>
 }
 
 // モデルのロード
-async function loadModel(renderer: THREE.WebGLRenderer): Promise<Model> {
+async function loadModel(renderer: THREE.WebGLRenderer): Promise<THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>> {
   return loadGLTF("res/Cube.glb").then(function (gltf: THREE.GLTF) {
     return findModel(gltf.scene, "DST")
   })
 }
 
 // マテリアルをノードベースで再構成
-function nodeBased(model: Model, envMap: THREE.Texture): THREE.Mesh<THREE.BufferGeometry, THREE.StandardNodeMaterial> {
+function nodeBased(model: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>, envMap: THREE.Texture): THREE.Mesh<THREE.BufferGeometry, THREE.StandardNodeMaterial> {
   const matRef = model.material
 
   const matNodeBased = new THREE.StandardNodeMaterial()
@@ -186,7 +186,7 @@ function nodeBased(model: Model, envMap: THREE.Texture): THREE.Mesh<THREE.Buffer
 }
 
 // ShaderMaterialでMeshStandardMaterial互換のマテリアルを再構成
-function shaderMaterialBased(model: Model, envMap: THREE.Texture) {
+function shaderMaterialBased(model: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>, envMap: THREE.Texture) {
   const matRef = model.material
 
   // MeshStandardMaterial用のUniformを作る。
@@ -261,13 +261,11 @@ async function loadGLTF(url: string): Promise<THREE.GLTF> {
   return loader.loadAsync(url).catch((e) => { throw `Not found. ${url}` });
 }
 
-type Model = { geometry: THREE.BufferGeometry, material: THREE.MeshStandardMaterial }
-
-function findModel(root: THREE.Object3D, name: string): Model {
+function findModel(root: THREE.Object3D, name: string): THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial> {
   for (const child of traverse(root)) {
     if (child.name === name) {
       if (isMesh(child) && isMaterial(child.material) && isMeshStandardMaterial(child.material))
-        return { geometry: child.geometry, material: child.material }
+        return child as THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>
     }
   }
   throw Error(`Not found. Mesh:${name}`);

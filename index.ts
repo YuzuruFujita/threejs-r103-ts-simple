@@ -86,43 +86,48 @@ async function create(): Promise<void> {
     scene.add(meshShader)
     meshShader.position.set(-2.5, 0, -2.5)
 
-    // 地面
-    scene.add(new THREE.Mesh(new THREE.PlaneGeometry(20, 20).rotateX(-Math.PI / 2).translate(0, -1, 0), new THREE.MeshStandardMaterial()))
+    return rawShader(model, scene.environment).then(function (meshRaw) {
+      scene.add(meshRaw)
+      meshRaw.position.set(2.5, 0, -2.5);
 
-    for (const i of traverse(scene)) {
-      if (isMesh(i))
-        i.receiveShadow = i.castShadow = true;
-    }
+      // 地面
+      scene.add(new THREE.Mesh(new THREE.PlaneGeometry(20, 20).rotateX(-Math.PI / 2).translate(0, -1, 0), new THREE.MeshStandardMaterial()))
 
-    const gui = new dat.GUI()
-    gui.add(mesh, "visible", mesh.visible).name("gltf")
-    gui.add(meshNode, "visible", meshNode.visible).name("Node")
-    gui.add(meshShader, "visible", meshShader.visible).name("Shader")
+      for (const i of traverse(scene)) {
+        if (isMesh(i))
+          i.receiveShadow = i.castShadow = true;
+      }
 
-    // UI
-    const orbit = new THREE.OrbitControls(camera, renderer.domElement)
-    window.addEventListener('keydown', wasdqeMove(camera, orbit), false)
+      const gui = new dat.GUI()
+      gui.add(mesh, "visible", mesh.visible).name("gltf")
+      gui.add(meshNode, "visible", meshNode.visible).name("Node")
+      gui.add(meshShader, "visible", meshShader.visible).name("Shader")
 
-    function onWindowResize() {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      composer.setSize(window.innerWidth, window.innerHeight);
-    }
+      // UI
+      const orbit = new THREE.OrbitControls(camera, renderer.domElement)
+      window.addEventListener('keydown', wasdqeMove(camera, orbit), false)
 
-    createCameraUI(camera, orbit)
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        composer.setSize(window.innerWidth, window.innerHeight);
+      }
 
-    const syncs: (() => void)[] = []
-    function animate() {
-      for (const i of syncs)
-        i()
-      composer.render();
-      stats.update()
-      requestAnimationFrame(animate);
-    }
+      createCameraUI(camera, orbit)
 
-    window.addEventListener('resize', onWindowResize, false);
-    animate()
+      const syncs: (() => void)[] = []
+      function animate() {
+        for (const i of syncs)
+          i()
+        composer.render();
+        stats.update()
+        requestAnimationFrame(animate);
+      }
+
+      window.addEventListener('resize', onWindowResize, false);
+      animate()
+    })
   })
 }
 
@@ -233,6 +238,59 @@ function shaderMaterialBased(model: THREE.Mesh<THREE.BufferGeometry, THREE.MeshS
   return new THREE.Mesh(model.geometry, material)
 }
 
+// Standard/Physical用のGLSLシェーダ + RawShaderMaterialで生成
+// 動的にパラメータを変更していないのでマテリアルや環境マップの構成が変化すると動かなくなる
+async function rawShader(model: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>, envMap: THREE.Texture) {
+  const matRef = model.material
+  const pVert = loadText("shaders/meshphysical.vert")
+  const pFrag = loadText("shaders/meshphysical.frag")
+  return Promise.all([pVert, pFrag]).then(function ([vertexShader, fragmentShader]) {
+    const uniforms = {
+      ...THREE.UniformsUtils.clone(THREE.ShaderLib.standard.uniforms),
+      ...THREE.UniformsUtils.clone(THREE.UniformsLib.lights),
+      diffuse: { value: matRef.color },
+      map: { value: matRef.map },
+      normalMap: { value: matRef.normalMap },
+      normalScale: { value: matRef.normalScale },
+      roughnessMap: { value: matRef.roughnessMap },
+      metalnessMap: { value: matRef.metalnessMap },
+      envMap: { value: envMap },
+      roughness: { value: matRef.roughness },
+      metalness: { value: matRef.metalness },
+      refractionRatio: { value: 0.95 }
+    }
+    type Defines = {
+      USE_ENVMAP?: "",
+      ENVMAP_TYPE_CUBE?: "", // CubeまたはEquirectangular。Equirectangularはシェーダに渡す手前でCubeマップに変換している
+      ENVMAP_TYPE_CUBE_UV?: "" // PMREM
+      ENVMAP_MODE_REFLECTION?: "" // 反射
+      ENVMAP_MODE_REFRACTION?: "" // 屈折
+      USE_SHADOWMAP?: "",
+      USE_MAP?: "",
+      USE_ROUGHNESSMAP?: "",
+      USE_METALNESSMAP?: "",
+      USE_NORMALMAP?: ""
+      TANGENTSPACE_NORMALMAP?: "",
+      USE_UV?: ""
+    }
+    // 本来は動的に判断すべきところ
+    const defines: Defines = {
+      USE_ENVMAP: "",
+      ENVMAP_TYPE_CUBE_UV: "",
+      ENVMAP_MODE_REFLECTION: "",
+      USE_SHADOWMAP: "",
+      USE_MAP: "",
+      USE_ROUGHNESSMAP: "",
+      USE_METALNESSMAP: "",
+      USE_NORMALMAP: "",
+      TANGENTSPACE_NORMALMAP: "",
+      USE_UV: "",
+    }
+    const material = new THREE.RawShaderMaterial({ uniforms, defines, vertexShader, fragmentShader, lights: true, glslVersion: THREE.GLSL3 });
+    return new THREE.Mesh(model.geometry, material)
+  })
+}
+
 function* traverse(x: THREE.Object3D): Generator<THREE.Object3D> {
   yield x
   for (const i of x.children) {
@@ -259,6 +317,10 @@ async function loadGLTF(url: string): Promise<THREE.GLTF> {
   loader.setDRACOLoader(dracoLoader);
   // loader.setDDSLoader(new THREE.DDSLoader()); // r126ではDDSはサポートされない。代わりにKTX v2 images with Basis Universal supercompressionの利用が推奨
   return loader.loadAsync(url).catch((e) => { throw `Not found. ${url}` });
+}
+
+async function loadText(url: string): Promise<string> {
+  return fetch(url).then(function (c) { return c.text() }).then(function (t) { return t })
 }
 
 function findModel(root: THREE.Object3D, name: string): THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial> {
